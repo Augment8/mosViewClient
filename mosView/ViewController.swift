@@ -13,10 +13,19 @@ import SpriteKit
 import SpriteKit
 
 class GameScene: SKScene {
-    var users = [NSString: NSDictionary]()
+    var users = [NSString: SKNode]()
+    let rate = 0.3
 
     override func didMoveToView(view: SKView) {
         /* Setup your scene here */
+        physicsWorld.gravity = CGVectorMake(0, 0)
+        physicsBody = SKPhysicsBody(edgeLoopFromRect: frame)
+        let square = SKSpriteNode(
+            color: UIColor.whiteColor(),
+            size: size
+        )
+        square.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame));
+        addChild(square)
     }
     
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
@@ -42,20 +51,33 @@ class GameScene: SKScene {
     override func update(currentTime: CFTimeInterval) {
         /* Called before each frame is rendered */
     }
-    typealias User = NSDictionary
-    func updateUser(id: NSString, user: User) {
+    typealias Input = NSDictionary
+    func updateUser(id: NSString, input: Input) {
         if let _ = users[id] {
         } else {
             let myLabel = SKLabelNode(fontNamed:"Chalkduster")
-            if let name = user["name"] {
-                myLabel.text = name as? String
-            }
-            myLabel.fontSize = 45;
+            myLabel.fontSize = 45
+            myLabel.fontColor = UIColor.blackColor()
             myLabel.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame));
+            myLabel.physicsBody = SKPhysicsBody(rectangleOfSize: CGSize(width: 10, height: 10))
             
             self.addChild(myLabel)
+            users[id] = myLabel
         }
-        users[id] = user
+        if let user = users[id] {
+            if let name = input["name"] {
+                (user as! SKLabelNode).text = name as? String
+            }
+            if let type = input["type"] as? String {
+                switch type {
+                    case "gravity":
+                        if let x = input["x"] as? NSNumber,y = input["y"] as? NSNumber {
+                            user.physicsBody?.applyForce(CGVector(dx: x.doubleValue * rate, dy: y.doubleValue * rate))
+                    }
+                    default: break
+                }
+            }
+        }
     }
 }
 
@@ -72,7 +94,7 @@ class ViewController: UIViewController, WebSocketDelegate {
         do {
             let json = try NSJSONSerialization.JSONObjectWithData(data!, options: .MutableContainers) as! NSDictionary
             NSLog("%@", json)
-            _scene.updateUser(json["id"] as! NSString, user: json)
+            _scene.updateUser(json["id"] as! NSString, input: json)
         } catch {
             NSLog("json serializa error")
         }
