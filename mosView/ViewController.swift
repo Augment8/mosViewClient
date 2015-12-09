@@ -12,9 +12,18 @@ import SpriteKit
 
 import SpriteKit
 
+class User {
+    var isStealth = false
+    let node: SKNode
+    
+    init(node: SKNode) {
+        self.node = node
+    }
+}
+
 class GameScene: SKScene {
-    var users = [NSString: SKNode]()
-    let rate = 0.3
+    var users = [NSString: User]()
+    let rate: Double = 1
 
     override func didMoveToView(view: SKView) {
         /* Setup your scene here */
@@ -27,27 +36,7 @@ class GameScene: SKScene {
         square.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame));
         addChild(square)
     }
-    
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
-        /* Called when a touch begins */
-        
-        for touch in touches {
-            let location = touch.locationInNode(self)
-            
-            let sprite = SKSpriteNode(imageNamed:"Spaceship")
-            
-            sprite.xScale = 0.5
-            sprite.yScale = 0.5
-            sprite.position = location
-            
-            let action = SKAction.rotateByAngle(CGFloat(M_PI), duration:1)
-            
-            sprite.runAction(SKAction.repeatActionForever(action))
-            
-            self.addChild(sprite)
-        }
-    }
-    
+
     override func update(currentTime: CFTimeInterval) {
         /* Called before each frame is rendered */
     }
@@ -55,25 +44,57 @@ class GameScene: SKScene {
     func updateUser(id: NSString, input: Input) {
         if let _ = users[id] {
         } else {
-            let myLabel = SKLabelNode(fontNamed:"Chalkduster")
-            myLabel.fontSize = 45
-            myLabel.fontColor = UIColor.blackColor()
-            myLabel.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame));
-            myLabel.physicsBody = SKPhysicsBody(rectangleOfSize: CGSize(width: 10, height: 10))
+            let user = SKNode()
+            let r: CGFloat = 10.0
+            user.physicsBody =  SKPhysicsBody.init(circleOfRadius: r)
+            user.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame));
+            addChild(user)
+
+            let name = SKLabelNode(fontNamed:"Chalkduster")
+            name.name = "name"
+            name.fontSize = 20
+            name.fontColor = UIColor.blackColor()
+            name.position = CGPoint(x:0, y:-40)
+            user.addChild(name)
             
-            self.addChild(myLabel)
-            users[id] = myLabel
+            let path = CGPathCreateMutable();
+            CGPathAddArc(path, nil, 0, 0, r, 0, CGFloat(M_PI * 2), true);
+            let circle = SKShapeNode(path: path)
+            circle.name = "object"
+            circle.strokeColor = UIColor.blackColor()
+            circle.position = CGPointMake(0,0)
+            user.addChild(circle)
+            
+            users[id] = User(node: user)
         }
         if let user = users[id] {
             if let name = input["name"] {
-                (user as! SKLabelNode).text = name as? String
+                if let nameNode = user.node.childNodeWithName("name") {
+                    (nameNode as! SKLabelNode).text = name as? String
+                }
             }
             if let type = input["type"] as? String {
                 switch type {
                     case "gravity":
                         if let x = input["x"] as? NSNumber,y = input["y"] as? NSNumber {
-                            user.physicsBody?.applyForce(CGVector(dx: x.doubleValue * rate, dy: y.doubleValue * rate))
-                    }
+                            user.node.physicsBody?.applyForce(CGVector(dx: x.doubleValue * rate, dy: y.doubleValue * rate))
+                        }
+                    case "touchstart":
+                        user.isStealth = true
+                        if let objNode = user.node.childNodeWithName("object") as! SKShapeNode? {
+                            objNode.strokeColor = UIColor.clearColor()
+                        }
+                        if let objNode = user.node.childNodeWithName("name") as! SKLabelNode? {
+                            objNode.fontColor = UIColor.clearColor()
+                        }
+                    case "touchend":
+                        user.isStealth = false
+                        if let objNode = user.node.childNodeWithName("object") as! SKShapeNode? {
+                            objNode.strokeColor = UIColor.blackColor()
+                        }
+                        if let objNode = user.node.childNodeWithName("name") as! SKLabelNode? {
+                            objNode.fontColor = UIColor.blackColor()
+                        }
                     default: break
                 }
             }
