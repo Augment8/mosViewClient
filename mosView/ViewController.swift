@@ -10,19 +10,31 @@ import UIKit
 import Starscream
 import SpriteKit
 
-import SpriteKit
+class Team {
+    let color: UIColor
+    
+    init(color: UIColor) {
+        self.color = color
+    }
+}
 
 class User {
     var isStealth = false
+    let team: Team
     let node: SKNode
     
-    init(node: SKNode) {
+    init(node: SKNode, team: Team) {
         self.node = node
+        self.team = team
     }
 }
 
 class GameScene: SKScene {
     var users = [NSString: User]()
+    var redTeam = Team(color: UIColor(hue: 0.1, saturation: 1, brightness: 1, alpha: 1))
+    var redTeamMembers = [User]()
+    var blueTeam = Team(color: UIColor(hue: 0.58, saturation: 1, brightness: 1, alpha: 1))
+    var blueTeamMembers = [User]()
     let rate: Double = 1
 
     override func didMoveToView(view: SKView) {
@@ -65,7 +77,17 @@ class GameScene: SKScene {
             circle.position = CGPointMake(0,0)
             user.addChild(circle)
             
-            users[id] = User(node: user)
+            if redTeamMembers.count < blueTeamMembers.count {
+                let u = User(node: user, team: redTeam)
+                users[id] = u
+                redTeamMembers.append(u)
+                circle.fillColor = redTeam.color
+            } else {
+                let u = User(node: user, team: blueTeam)
+                users[id] = u
+                blueTeamMembers.append(u)
+                circle.fillColor = blueTeam.color
+            }
         }
         if let user = users[id] {
             if let name = input["name"] {
