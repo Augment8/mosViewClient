@@ -31,22 +31,22 @@ class User {
 
 class GameScene: SKScene {
     var users = [NSString: User]()
-    var redTeam = Team(color: UIColor(hue: 0.1, saturation: 1, brightness: 1, alpha: 1))
+    var redTeam = Team(color: UIColor(hue: 0.14, saturation: 1, brightness: 1, alpha: 1))
     var redTeamMembers = [User]()
-    var blueTeam = Team(color: UIColor(hue: 0.58, saturation: 1, brightness: 1, alpha: 1))
+    var blueTeam = Team(color: UIColor(hue: 0.54, saturation: 1, brightness: 1, alpha: 1))
     var blueTeamMembers = [User]()
-    let rate: Double = 1
+    let rate: Double = 0.6
 
     override func didMoveToView(view: SKView) {
         /* Setup your scene here */
         physicsWorld.gravity = CGVectorMake(0, 0)
-        physicsBody = SKPhysicsBody(edgeLoopFromRect: frame)
-        let square = SKSpriteNode(
+        let field = SKSpriteNode(
             color: UIColor.whiteColor(),
-            size: size
+            size: CGSize(width: 600, height: 600)
         )
-        square.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame));
-        addChild(square)
+        field.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame));
+        physicsBody = SKPhysicsBody(edgeLoopFromRect: field.frame)
+        addChild(field)
     }
 
     override func update(currentTime: CFTimeInterval) {
@@ -57,7 +57,7 @@ class GameScene: SKScene {
         if let _ = users[id] {
         } else {
             let user = SKNode()
-            let r: CGFloat = 10.0
+            let r: CGFloat = 20.0
             user.physicsBody =  SKPhysicsBody.init(circleOfRadius: r)
             user.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame));
             addChild(user)
@@ -99,7 +99,7 @@ class GameScene: SKScene {
                 switch type {
                     case "gravity":
                         if let x = input["x"] as? NSNumber,y = input["y"] as? NSNumber {
-                            user.node.physicsBody?.applyForce(CGVector(dx: x.doubleValue * rate, dy: y.doubleValue * rate))
+                            user.node.physicsBody?.applyImpulse(CGVector(dx: x.doubleValue * rate, dy: y.doubleValue * rate))
                         }
                     case "touchstart":
                         user.isStealth = true
