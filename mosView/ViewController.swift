@@ -36,28 +36,53 @@ class GameScene: SKScene {
     var blueTeam = Team(color: UIColor(hue: 0.54, saturation: 1, brightness: 1, alpha: 1))
     var blueTeamMembers = [User]()
     let rate: Double = 0.6
+    let width: CGFloat = 600.0
+    let field = SKSpriteNode(
+        color: UIColor.whiteColor(),
+        size: CGSize(width: 600, height: 600)
+    )
+    var fieldColor = [[SKSpriteNode]]()
+
 
     override func didMoveToView(view: SKView) {
         /* Setup your scene here */
         physicsWorld.gravity = CGVectorMake(0, 0)
-        let field = SKSpriteNode(
-            color: UIColor.whiteColor(),
-            size: CGSize(width: 600, height: 600)
-        )
         field.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame));
         physicsBody = SKPhysicsBody(edgeLoopFromRect: field.frame)
         addChild(field)
+        
+        let mapSize = 20
+        let mapTipWidth = width / CGFloat(mapSize)
+        for i in 0..<mapSize {
+            fieldColor.append([])
+            for j in 0..<mapSize {
+                let node: SKSpriteNode = SKSpriteNode(color:redTeam.color, size: CGSizeMake(mapTipWidth, mapTipWidth))
+                node.position = CGPoint(x: mapTipWidth * CGFloat(i) - 300 + 15, y:  mapTipWidth * CGFloat(j) - 300 + 15
+                )
+                fieldColor[i].append(node)
+                field.addChild(node)
+            }
+        }
     }
 
     override func update(currentTime: CFTimeInterval) {
         /* Called before each frame is rendered */
+        let node: SKSpriteNode = fieldColor[Int(rand() % 20)][Int(rand() % 20)]
+        switch rand() % 3 {
+        case 1:
+            node.color = redTeam.color
+        case 2:
+            node.color = blueTeam.color
+        default:
+            node.color = UIColor.whiteColor()
+        }
     }
     typealias Input = NSDictionary
     func updateUser(id: NSString, input: Input) {
         if let _ = users[id] {
         } else {
             let user = SKNode()
-            let r: CGFloat = 20.0
+            let r: CGFloat = 15.0
             user.physicsBody =  SKPhysicsBody.init(circleOfRadius: r)
             user.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame));
             addChild(user)
