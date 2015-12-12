@@ -30,6 +30,7 @@ class User {
 }
 
 class GameScene: SKScene {
+    var isInit = false
     var users = [NSString: User]()
     var redTeam = Team(color: UIColor(hue: 0.14, saturation: 1, brightness: 1, alpha: 1))
     var redTeamMembers = [User]()
@@ -42,7 +43,10 @@ class GameScene: SKScene {
         size: CGSize(width: 600, height: 600)
     )
     var fieldColor = [[SKSpriteNode]]()
-
+    var redCount: Int = 0
+    var redLabel: SKLabelNode = SKLabelNode()
+    var blueLabel: SKLabelNode = SKLabelNode()
+    var blueCount: Int = 0
 
     override func didMoveToView(view: SKView) {
         /* Setup your scene here */
@@ -51,12 +55,24 @@ class GameScene: SKScene {
         physicsBody = SKPhysicsBody(edgeLoopFromRect: field.frame)
         addChild(field)
         
+        blueLabel = SKLabelNode(fontNamed:"Chalkduster")
+        blueLabel.name = "blue"
+        blueLabel.fontColor = blueTeam.color
+        blueLabel.position = CGPoint(x: 100, y: 500)
+        addChild(blueLabel)
+        
+        redLabel = SKLabelNode(fontNamed:"Chalkduster")
+        redLabel.name = "red"
+        redLabel.fontColor = redTeam.color
+        redLabel.position = CGPoint(x: 100, y: 200)
+        addChild(redLabel)
+        
         let mapSize = 20
         let mapTipWidth = width / CGFloat(mapSize)
         for i in 0..<mapSize {
             fieldColor.append([])
             for j in 0..<mapSize {
-                let node: SKSpriteNode = SKSpriteNode(color:redTeam.color, size: CGSizeMake(mapTipWidth, mapTipWidth))
+                let node: SKSpriteNode = SKSpriteNode(color:UIColor.whiteColor(), size: CGSizeMake(mapTipWidth, mapTipWidth))
                 node.position = CGPoint(x: mapTipWidth * CGFloat(i) - 300 + 15, y:  mapTipWidth * CGFloat(j) - 300 + 15
                 )
                 fieldColor[i].append(node)
@@ -67,6 +83,41 @@ class GameScene: SKScene {
 
     override func update(currentTime: CFTimeInterval) {
         /* Called before each frame is rendered */
+        if !isInit {
+            return
+        }
+        for user: User in users.values {
+            NSLog("user %lf %lf", user.node.position.x, user.node.position.y)
+            let dx = user.node.position.x - 215
+            let dy = user.node.position.y - 95
+            let x = dx / 30
+            let y = dy / 30
+            // NSLog("px: %lf py: %lf, x: %d, y: %d", dx, dy, Int(x) ,Int(y))
+
+            if x < 20 && x >= 0 && y < 20 && y >= 0{
+                fieldColor[Int(x)][Int(y)].color = user.team.color
+            }
+        }
+
+        blueCount = 0
+        redCount = 0
+        for i in 0..<20 {
+            for j in 0..<20  {
+                let color = fieldColor[i][j].color
+                if color.description == blueTeam.color.description {
+                    blueCount += 1
+                } else if color.description == redTeam.color.description {
+                    redCount += 1
+                }
+            }
+        }
+        let bluePer = Int(CGFloat(blueCount) / 4)
+        blueLabel.text = String(format: "blue %d%%", bluePer)
+        let redPer = Int(CGFloat(redCount) / 4)
+        redLabel.text = String(format: "yellow %d%%", redPer)
+        NSLog("blue: %d, red: %d", blueCount, redCount)
+        
+        /*
         let node: SKSpriteNode = fieldColor[Int(rand() % 20)][Int(rand() % 20)]
         switch rand() % 3 {
         case 1:
@@ -76,6 +127,7 @@ class GameScene: SKScene {
         default:
             node.color = UIColor.whiteColor()
         }
+*/
     }
     typealias Input = NSDictionary
     func updateUser(id: NSString, input: Input) {
@@ -86,6 +138,7 @@ class GameScene: SKScene {
             user.physicsBody =  SKPhysicsBody.init(circleOfRadius: r)
             user.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame));
             addChild(user)
+            
 
             let name = SKLabelNode(fontNamed:"Chalkduster")
             name.name = "name"
@@ -113,6 +166,7 @@ class GameScene: SKScene {
                 blueTeamMembers.append(u)
                 circle.fillColor = blueTeam.color
             }
+            isInit = true
         }
         if let user = users[id] {
             if let name = input["name"] {
@@ -161,7 +215,7 @@ class ViewController: UIViewController, WebSocketDelegate {
         let data = text.dataUsingEncoding(NSUTF8StringEncoding)
         do {
             let json = try NSJSONSerialization.JSONObjectWithData(data!, options: .MutableContainers) as! NSDictionary
-            NSLog("%@", json)
+//            NSLog("%@", json)
             _scene.updateUser(json["id"] as! NSString, input: json)
         } catch {
             NSLog("json serializa error")
